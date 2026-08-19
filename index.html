@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<title>사이트 보관함</title>
+<style>
+@font-face {
+  font-family: 'NanumBarunPen';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunpen.woff') format('woff');
+  font-weight: normal;
+  font-display: swap;
+}
+
+:root {
+  --paper: #F7F5F0;
+  --paper-2: #EFEBE2;
+  --ink: #211E1B;
+  --ink-soft: #635C52;
+  --border: #DED6C7;
+  --admin: #33417A;
+  --admin-dark: #232C57;
+  --admin-tint: #E9EBF5;
+  --kid: #FF8A3D;
+  --kid-2: #2FBF9F;
+  --kid-tint: #FFF1E2;
+  --stamp: #B23A2E;
+  --card-bg: #FFFFFF;
+  --shadow: 0 2px 10px rgba(33,30,27,0.06);
+  --radius: 14px;
+  --font-body: 'NanumBarunPen', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+  --font-display: 'NanumBarunPen', var(--font-body);
+  --font-serif: 'NanumBarunPen', var(--font-body);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+#app { min-height: 100vh; }
+button, input, select, textarea { font-family: inherit; font-size: 1rem; color: inherit; }
+h1, h2, h3 { margin: 0; }
+
+/* ---------- 로딩 ---------- */
+.loading-screen {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; color: var(--ink-soft);
+}
+.stamp-spin {
+  font-family: var(--font-serif);
+  font-size: 40px; font-weight: 800; color: var(--stamp);
+  border: 3px solid var(--stamp); border-radius: 50%;
+  width: 72px; height: 72px; display: flex; align-items: center; justify-content: center;
+  animation: spin 1.4s linear infinite;
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ---------- 게이트 ---------- */
+.gate {
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 20px; text-align: center; gap: 40px;
+}
+.gate-head .eyebrow {
+  font-size: 12px; letter-spacing: 0.18em; color: var(--ink-soft); font-weight: 600;
+}
+.gate-head h1 {
+  font-family: var(--font-serif); font-size: 42px; font-weight: 800; margin: 10px 0 8px;
+  letter-spacing: -0.01em;
+}
+.gate-head .sub { color: var(--ink-soft); font-size: 15px; }
+.gate-tiles { display: flex; gap: 22px; flex-wrap: wrap; justify-content: center; max-width: 760px; }
+.tile {
+  width: 320px; padding: 32px 24px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--card-bg); cursor: pointer; text-align: left;
+  display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.tile:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(33,30,27,0.10); }
+.tile-stamp {
+  width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif); font-weight: 800; font-size: 20px;
+}
+.tile-admin .tile-stamp { background: var(--admin-tint); color: var(--admin); }
+.tile-kid .tile-stamp { background: var(--kid-tint); color: var(--kid); font-family: var(--font-display); }
+.tile-label { font-size: 19px; font-weight: 700; }
+.tile-admin .tile-label { font-family: var(--font-serif); }
+.tile-kid .tile-label { font-family: var(--font-display); }
+.tile-desc { font-size: 13px; color: var(--ink-soft); }
+
+.login-form { display: flex; flex-direction: column; gap: 10px; width: 280px; }
+.login-form input {
+  padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg);
+}
+
+/* ---------- 버튼 공통 ---------- */
+.btn {
+  padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg);
+  cursor: pointer; font-weight: 600; transition: transform .12s ease, background .12s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--admin); border-color: var(--admin); color: #fff; }
+.btn-ghost { background: transparent; }
+.btn-small { padding: 7px 12px; font-size: 13px; border-radius: 8px; }
+.btn-danger { background: var(--stamp); border-color: var(--stamp); color: #fff; }
+.btn-kid { background: var(--kid); border-color: var(--kid); color: #fff; font-family: var(--font-display); letter-spacing: 0.01em; }
+.btn-submit { background: var(--kid-2); border-color: var(--kid-2); }
+
+/* ---------- 셸 공통 ---------- */
+.shell { min-height: 100vh; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 24px; position: sticky; top: 0; z-index: 5; backdrop-filter: blur(6px);
+}
+.admin-topbar { background: rgba(247,245,240,0.92); border-bottom: 1px solid var(--border); }
+.kid-topbar { background: rgba(255,241,226,0.94); border-bottom: 2px solid var(--kid); }
+.brand { font-family: var(--font-serif); font-weight: 800; cursor: pointer; color: var(--admin); }
+.kid-topbar .brand { font-family: var(--font-display); color: var(--kid); font-size: 18px; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab {
+  padding: 8px 14px; border-radius: 999px; border: 1px solid transparent; background: transparent;
+  cursor: pointer; font-weight: 600; color: var(--ink-soft);
+}
+.tab.active { background: var(--admin); color: #fff; }
+.content { padding: 28px 24px 80px; max-width: 1080px; margin: 0 auto; }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.section-head h2 { font-family: var(--font-serif); font-size: 24px; }
+.hint { color: var(--ink-soft); font-size: 13px; }
+.empty { color: var(--ink-soft); padding: 28px; border: 1px dashed var(--border); border-radius: var(--radius); text-align: center; }
+
+/* ---------- 카테고리 칩 ---------- */
+.cat-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px; }
+.chip {
+  padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--card-bg);
+  cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-soft);
+}
+.chip.active { background: var(--admin); border-color: var(--admin); color: #fff; }
+.chip-danger { color: var(--stamp); border-color: var(--stamp); background: transparent; }
+.chip-add input {
+  padding: 7px 12px; border-radius: 999px; border: 1px dashed var(--border); background: transparent; width: 140px;
+}
+
+/* ---------- 카드 그리드 ---------- */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.card {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px;
+}
+.card-top { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-soft); }
+.card-cat { font-weight: 700; }
+.card-title { font-size: 16px; font-weight: 700; line-height: 1.3; min-height: 2.6em; }
+.card-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+
+/* ---------- 폼 ---------- */
+.panel-form {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px;
+}
+.panel-form h3 { font-family: var(--font-serif); font-size: 17px; }
+.panel-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.panel-form input[type=text], .panel-form input[type=password], .panel-form textarea, .panel-form select {
+  padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--paper); font-weight: 400; color: var(--ink);
+}
+.form-actions { display: flex; gap: 8px; margin-top: 4px; }
+.seg { display: flex; gap: 6px; }
+.seg-btn { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--paper); cursor: pointer; font-size: 13px; }
+.seg-btn.active { background: var(--admin); color: #fff; border-color: var(--admin); }
+
+/* ---------- 요일 스케줄 ---------- */
+.schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.day-col { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.day-col-head { font-family: var(--font-serif); font-weight: 800; font-size: 15px; border-bottom: 2px solid var(--admin-tint); padding-bottom: 6px; }
+.mission-slot { display: flex; flex-direction: column; gap: 4px; padding: 8px; background: var(--paper); border-radius: 8px; position: relative; }
+.mission-slot input, .mission-slot textarea { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 13px; background: #fff; resize: vertical; }
+.seg-mini { gap: 4px; }
+.seg-mini .seg-btn { padding: 4px 8px; font-size: 11px; }
+.slot-remove { align-self: flex-end; border: none; background: transparent; color: var(--stamp); font-size: 12px; cursor: pointer; padding: 0; }
+.add-mission-btn { width: 100%; }
+.save-day-btn { width: 100%; margin-top: 4px; }
+
+/* ---------- 제출물 확인함 ---------- */
+.sub-list { display: flex; flex-direction: column; gap: 10px; }
+.sub-row { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.sub-meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; font-size: 14px; }
+.sub-class, .sub-day { color: var(--ink-soft); font-size: 12px; }
+.sub-mission { background: var(--admin-tint); color: var(--admin); padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.sub-time { margin-left: auto; color: var(--ink-soft); font-size: 12px; }
+.sub-actions { margin-top: 8px; }
+.sub-image-slot { margin-top: 10px; }
+.sub-image-slot:not(.open) img { display: none; }
+.sub-image { max-width: 260px; border-radius: 10px; display: block; margin-bottom: 8px; border: 1px solid var(--border); }
+.loading-text { color: var(--ink-soft); font-size: 13px; }
+
+/* ---------- 아이 모드 ---------- */
+.kid-content { max-width: 640px; }
+.kid-day-title { font-family: var(--font-display); font-size: 26px; color: var(--kid); margin-bottom: 16px; }
+.day-select { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--kid); background: #fff; font-weight: 700; }
+.mission-cards { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+.mission-card {
+  background: var(--card-bg); border: 2px solid var(--kid-tint); border-radius: 18px; padding: 20px;
+  display: flex; flex-direction: column; gap: 10px; box-shadow: var(--shadow);
+}
+.mission-num { font-family: var(--font-display); font-size: 12px; color: var(--kid); letter-spacing: 0.06em; }
+.mission-card h3 { font-size: 19px; }
+
+.submit-panel {
+  background: var(--card-bg); border-radius: 18px; padding: 22px; box-shadow: var(--shadow);
+  border: 2px dashed var(--kid-2);
+}
+.submit-panel h3 { font-family: var(--font-display); color: var(--kid-2); font-size: 19px; }
+.submit-hint { color: var(--ink-soft); font-size: 13px; margin: 6px 0 14px; }
+#submit-form { display: flex; flex-direction: column; gap: 12px; }
+#submit-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+#submit-form input[type=text], #submit-form select {
+  padding: 11px 12px; border-radius: 10px; border: 1px solid var(--border); font-weight: 400; color: var(--ink); font-size: 15px;
+}
+.paste-zone {
+  border: 2px dashed var(--border); border-radius: 14px; min-height: 130px;
+  display: flex; align-items: center; justify-content: center; text-align: center; color: var(--ink-soft);
+  cursor: text; font-size: 13px; padding: 12px; outline: none;
+}
+.paste-zone:focus { border-color: var(--kid-2); }
+.paste-preview { max-width: 100%; max-height: 220px; border-radius: 10px; }
+
+/* ---------- 토스트 ---------- */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px;
+  font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(0,0,0,0.2); z-index: 50;
+  max-width: 90vw; text-align: center;
+}
+
+/* ---------- 저장소 오류 배너 ---------- */
+.storage-banner {
+  position: sticky; top: 0; z-index: 30;
+  background: #FDEDEA; color: var(--stamp); border-bottom: 2px solid var(--stamp);
+  padding: 12px 20px; font-size: 13px; line-height: 1.6; text-align: center;
+}
+.storage-banner strong { display: block; font-size: 14px; margin-bottom: 2px; }
+.storage-banner .btn { margin-top: 8px; background: var(--stamp); color: #fff; border-color: var(--stamp); }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 640px) {
+  .gate-head h1 { font-size: 32px; }
+  .tile { width: 100%; }
+  .content { padding: 20px 14px 64px; }
+  .topbar { padding: 12px 16px; }
+}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ===================== 상수/유틸 ===================== */
+const APP_BUILD = 'v10-2026.08.19-github-pages-hosted';
+
+/* ===================== 구글시트 저장소 연결 주소 ===================== */
+// 아래 Code.gs를 구글 시트에 배포한 뒤 나온 "웹앱 URL"을 여기에 붙여넣으세요.
+// 예: https://script.google.com/macros/s/AKfycb.../exec
+const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbweF5i2ow4TQOxHSNLAQ0whOrvO2TsOngF5t3Vgeb6dNQfBrPwmfFnHzK9yYBZ4URK7sg/exec';
+
+const DAYS = [
+  { key: 'mon', label: '월요일' },
+  { key: 'tue', label: '화요일' },
+  { key: 'wed', label: '수요일' },
+  { key: 'thu', label: '목요일' },
+  { key: 'fri', label: '금요일' },
+  { key: 'sat', label: '토요일' },
+  { key: 'sun', label: '일요일' },
+];
+const DAY_MAP = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const todayKey = () => DAY_MAP[new Date().getDay()];
+const dayLabel = (key) => (DAYS.find(d => d.key === key) || {}).label || key;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = (str) => String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// 미션/카드의 url 또는 code를 실제 클릭 가능한 링크(href)로 변환.
+// window.open()을 스크립트로 호출하면 게시된 아티팩트의 샌드박스에서 팝업이 조용히 막힐 수 있어,
+// 항상 진짜 <a href> 클릭으로 새 탭이 열리게 한다.
+function missionHref(m) {
+  if (!m) return '#';
+  if (m.type === 'code') {
+    try {
+      const blob = new Blob([m.value || ''], { type: 'text/html' });
+      return URL.createObjectURL(blob);
+    } catch (e) { return '#'; }
+  }
+  return esc(m.value || '#');
+}
+const fmtTime = (iso) => {
+  try {
+    const d = new Date(iso);
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  } catch (e) { return iso; }
+};
+
+/* ===================== 저장소 헬퍼 (구글시트 Apps Script 백엔드) ===================== */
+// 이 앱의 나머지 코드는 전부 getShared/setShared/getSharedRaw/setSharedRaw 만 사용하므로,
+// 저장소를 바꿀 때 이 블록만 고치면 된다. (예전엔 window.storage, 지금은 구글시트)
+function sheetConfigured() {
+  return !!SHEET_API_URL && SHEET_API_URL.indexOf('PASTE_') !== 0;
+}
+async function sheetGet(key) {
+  if (!sheetConfigured()) return null;
+  try {
+    const res = await fetch(`${SHEET_API_URL}?action=get&key=${encodeURIComponent(key)}`);
+    const data = await res.json();
+    return data && data.ok ? data.value : null;
+  } catch (e) {
+    console.error('sheet get error', e);
+    return null;
+  }
+}
+async function sheetPost(payload) {
+  if (!sheetConfigured()) return false;
+  try {
+    // Content-Type을 text/plain으로 보내야 브라우저가 사전 확인(preflight) 요청을 보내지 않는다.
+    // Apps Script는 preflight(OPTIONS)를 처리하지 못해서, application/json으로 보내면 저장이 막힌다.
+    const res = await fetch(SHEET_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    return !!(data && data.ok);
+  } catch (e) {
+    console.error('sheet post error', e);
+    return false;
+  }
+}
+async function getShared(key, fallback) {
+  const raw = await sheetGet(key);
+  if (raw === null || raw === undefined || raw === '') return fallback;
+  try { return JSON.parse(raw); } catch (e) { return fallback; }
+}
+async function setShared(key, value) {
+  return sheetPost({ action: 'set', key, value: JSON.stringify(value) });
+}
+async function getSharedRaw(key) {
+  // submission-img:<id> 키는 서버가 구글드라이브에 올린 이미지의 주소(URL)를 그대로 돌려준다.
+  return sheetGet(key);
+}
+async function setSharedRaw(key, value) {
+  if (key.indexOf('submission-img:') === 0) {
+    // value는 data:image/...;base64,... 형태의 사진 데이터 → 시트 셀에 못 넣을 만큼 크므로
+    // 서버(Apps Script)가 구글드라이브에 파일로 저장하고, 시트에는 그 주소만 남긴다.
+    return sheetPost({ action: 'setImage', key, dataUrl: value });
+  }
+  return sheetPost({ action: 'set', key, value });
+}
+async function deleteSharedRaw(key) {
+  if (key.indexOf('submission-img:') === 0) {
+    return sheetPost({ action: 'deleteImage', key });
+  }
+  return sheetPost({ action: 'delete', key });
+}
+async function diagnoseStorage() {
+  if (!sheetConfigured()) return false;
+  try {
+    const res = await fetch(`${SHEET_API_URL}?action=ping`);
+    const data = await res.json();
+    return !!(data && data.ok);
+  } catch (e) {
+    console.error('storage diagnostic failed', e);
+    return false;
+  }
+}
+
+/* ===================== 전역 상태 ===================== */
+const S = {
+  mode: 'gate',        // gate | admin | kid
+  loaded: false,
+  storageOk: null,      // null=확인전, true/false
+  adminUnlocked: false,
+  adminTab: 'portfolio', // portfolio | schedule | submissions | settings
+  categories: [],
+  activeCategory: '__all__',
+  cards: [],
+  schedule: {},         // { mon: [{id,title,url}], ... }
+  submissionIndex: [],  // [{id,name,className,day,missionTitle,submittedAt}]
+  students: [],          // [{id,name,className}]
+  submissionDayFilter: todayKey(),
+  kidDay: todayKey(),
+  kidName: '',
+  kidClassName: '',
+  kidPasted: null,      // { dataUrl }
+  missionView: null,    // { day, idx } - 미션을 새 창 대신 같은 화면 안에서 볼 때
+  cardView: null,       // 관리자가 카드(사이트)를 같은 화면 안에서 미리볼 때 카드 id
+  toast: null,
+};
+
+function emptySchedule() {
+  const s = {};
+  DAYS.forEach(d => { s[d.key] = []; });
+  return s;
+}
+
+async function loadAll() {
+  const [categories, cards, schedule, submissionIndex, students] = await Promise.all([
+    getShared('categories', []),
+    getShared('cards', []),
+    getShared('missions-schedule', emptySchedule()),
+    getShared('submission-index', []),
+    getShared('students', []),
+  ]);
+  S.categories = categories;
+  S.cards = cards;
+  S.schedule = Object.assign(emptySchedule(), schedule);
+  S.submissionIndex = submissionIndex;
+  S.students = students;
+  S.loaded = true;
+}
+
+function showToast(msg) {
+  let el = document.getElementById('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => { el.remove(); }, 2200);
+}
+
+/* ===================== 이미지 리사이즈 ===================== */
+function resizeImage(dataUrl, maxW = 1000, quality = 0.72) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxW) {
+        height = Math.round(height * (maxW / width));
+        width = maxW;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+/* ===================== 렌더 루트 ===================== */
+const app = document.getElementById('app');
+
+function render() {
+  if (!S.loaded) {
+    app.innerHTML = renderLoading();
+    return;
+  }
+  let html = '';
+  if (S.storageOk === false) html += renderStorageBanner();
+  if (S.mode === 'gate') html += renderGate();
+  else if (S.mode === 'admin') html += !S.adminUnlocked ? renderAdminLogin() : (S.cardView ? renderCardViewOverlay() : renderAdminShell());
+  else if (S.mode === 'kid') html += S.missionView ? renderMissionOverlay() : renderKidShell();
+  app.innerHTML = html;
+  afterRender();
+}
+
+function renderStorageBanner() {
+  return `
+  <div class="storage-banner">
+    <strong>⚠ 구글시트 저장소에 연결되지 않았어요.</strong>
+    코드 맨 위 SHEET_API_URL에 배포된 Apps Script 웹앱 주소를 붙여넣었는지 확인해 주세요.
+    주소를 넣었는데도 이 메시지가 보이면, 배포 시 "액세스 권한"이 "전체"로 되어 있는지,
+    시트 편집 화면에서 코드를 저장하고 "새 배포"를 눌렀는지 확인해 주세요.
+    <button type="button" class="btn btn-small" data-action="retry-storage">다시 확인하기</button>
+  </div>`;
+}
+
+function renderLoading() {
+  return `<div class="loading-screen"><div class="stamp-spin">印</div><p>기록을 불러오는 중...</p></div>`;
+}
+
+/* ===================== 게이트 화면 ===================== */
+function renderGate() {
+  return `
+  <div class="gate">
+    <div class="gate-head">
+      <span class="eyebrow">MY SITE ARCHIVE</span>
+      <h1>사이트 보관함</h1>
+      <p class="sub">내가 만든 웹사이트를 모아두고, 아이들에게 미션으로 내어주는 곳</p>
+    </div>
+    <div class="gate-tiles">
+      <button class="tile tile-admin" data-action="go-admin">
+        <span class="tile-stamp">印</span>
+        <span class="tile-label">관리자로 입장</span>
+        <span class="tile-desc">포트폴리오 정리 · 요일별 미션 설정 · 제출물 확인</span>
+      </button>
+      <button class="tile tile-kid" data-action="go-kid">
+        <span class="tile-stamp">★</span>
+        <span class="tile-label">오늘의 미션 하러 가기</span>
+        <span class="tile-desc">요일별 미션 확인하고 수료증 제출하기</span>
+      </button>
+    </div>
+    <p style="text-align:center;margin-top:24px;font-size:11px;color:#999;">build: ${APP_BUILD}</p>
+  </div>`;
+}
+
+/* ===================== 관리자 로그인 ===================== */
+function renderAdminLogin() {
+  return `
+  <div class="gate">
+    <div class="gate-head">
+      <span class="eyebrow">ADMIN ONLY</span>
+      <h1>관리자 확인</h1>
+      <p class="sub">비밀번호를 입력해 주세요</p>
+    </div>
+    <div id="admin-login-form" class="login-form">
+      <input type="password" id="admin-pw-input" placeholder="비밀번호 (처음엔 0000)" autocomplete="off" />
+      <button type="button" class="btn btn-primary" data-action="admin-login-submit">입장하기</button>
+      <button type="button" class="btn btn-ghost" data-action="go-gate">뒤로가기</button>
+    </div>
+  </div>`;
+}
+
+/* ===================== 관리자 셸 ===================== */
+function renderAdminShell() {
+  const tabs = [
+    { key: 'portfolio', label: '포트폴리오' },
+    { key: 'schedule', label: '요일별 미션 설정' },
+    { key: 'students', label: '학생 명단' },
+    { key: 'submissions', label: '제출물 확인함' },
+    { key: 'settings', label: '설정' },
+  ];
+  return `
+  <div class="shell admin-shell">
+    <header class="topbar admin-topbar">
+      <div class="brand" data-action="go-gate">印 사이트 보관함 · 관리자</div>
+      <nav class="tabs">
+        ${tabs.map(t => `<button class="tab ${S.adminTab === t.key ? 'active' : ''}" data-action="admin-tab" data-tab="${t.key}">${t.label}</button>`).join('')}
+      </nav>
+    </header>
+    <main class="content">
+      ${S.adminTab === 'portfolio' ? renderPortfolioTab() : ''}
+      ${S.adminTab === 'schedule' ? renderScheduleTab() : ''}
+      ${S.adminTab === 'students' ? renderStudentsTab() : ''}
+      ${S.adminTab === 'submissions' ? renderSubmissionsTab() : ''}
+      ${S.adminTab === 'settings' ? renderSettingsTab() : ''}
+    </main>
+  </div>`;
+}
+
+/* ---- 포트폴리오 탭 ---- */
+function renderPortfolioTab() {
+  const cats = ['__all__', ...S.categories, '__uncategorized__'];
+  const catLabel = (c) => c === '__all__' ? '전체' : c === '__uncategorized__' ? '미분류' : c;
+  const visibleCards = S.activeCategory === '__all__'
+    ? S.cards
+    : S.cards.filter(c => (c.category || '__uncategorized__') === S.activeCategory);
+
+  return `
+  <section>
+    <div class="section-head">
+      <h2>포트폴리오</h2>
+      <button class="btn btn-primary" data-action="open-card-form">+ 새 웹사이트 추가</button>
+    </div>
+    <div class="cat-row">
+      ${cats.map(c => `<button class="chip ${S.activeCategory === c ? 'active' : ''}" data-action="pick-category" data-cat="${esc(c)}">${esc(catLabel(c))}</button>`).join('')}
+      <div class="chip-add" id="add-cat-form">
+        <input type="text" id="new-cat-input" placeholder="+ 카테고리 추가" />
+        <button type="button" class="btn btn-small" data-action="add-category-submit">추가</button>
+      </div>
+      ${S.categories.length ? `<button class="chip chip-danger" data-action="delete-category-prompt">카테고리 삭제</button>` : ''}
+    </div>
+
+    <div id="card-form-slot"></div>
+
+    <div class="card-grid">
+      ${visibleCards.length === 0 ? `<div class="empty">아직 저장된 웹사이트가 없어요. 위의 "+ 새 웹사이트 추가"로 첫 카드를 만들어보세요.</div>` : ''}
+      ${visibleCards.slice().reverse().map(cardHtml).join('')}
+    </div>
+  </section>`;
+}
+
+function cardHtml(c) {
+  const cat = c.category || '__uncategorized__';
+  const catLabel = cat === '__uncategorized__' ? '미분류' : cat;
+  return `
+  <article class="card" data-id="${c.id}">
+    <div class="card-top">
+      <span class="card-cat">${esc(catLabel)}</span>
+      <span class="card-type">${c.type === 'code' ? '코드' : '링크'}</span>
+    </div>
+    <h3 class="card-title">${esc(c.title)}</h3>
+    <div class="card-actions">
+      <button type="button" class="btn btn-small btn-primary" data-action="view-card" data-id="${c.id}">열기</button>
+      <button class="btn btn-small" data-action="copy-card" data-id="${c.id}">${c.type === 'code' ? '코드 복사' : '링크 복사'}</button>
+      <button class="btn btn-small btn-ghost" data-action="edit-card" data-id="${c.id}">수정</button>
+    </div>
+  </article>`;
+}
+
+function cardFormHtml(editing) {
+  const isEdit = !!editing;
+  const catOptions = S.categories.map(c => `<option value="${esc(c)}" ${isEdit && editing.category === c ? 'selected' : ''}>${esc(c)}</option>`).join('');
+  return `
+  <div id="card-form" class="panel-form">
+    <h3>${isEdit ? '웹사이트 수정' : '새 웹사이트 추가'}</h3>
+    <label>카테고리
+      <select id="card-cat-select">
+        <option value="__uncategorized__">미분류</option>
+        ${catOptions}
+      </select>
+    </label>
+    <label>제목
+      <input type="text" id="card-title-input" value="${isEdit ? esc(editing.title) : ''}" placeholder="예) 구구단 연습 사이트" required />
+    </label>
+    <label>저장 방식
+      <div class="seg">
+        <button type="button" class="seg-btn ${(!isEdit || editing.type === 'url') ? 'active' : ''}" data-seg="url">주소(URL)</button>
+        <button type="button" class="seg-btn ${(isEdit && editing.type === 'code') ? 'active' : ''}" data-seg="code">코드 붙여넣기</button>
+      </div>
+      <input type="hidden" id="card-type-input" value="${isEdit ? editing.type : 'url'}" />
+    </label>
+    <label id="card-value-label">${(isEdit && editing.type === 'code') ? 'HTML 코드' : '웹사이트 주소'}
+      <textarea id="card-value-input" rows="${(isEdit && editing.type === 'code') ? 8 : 2}" placeholder="${(isEdit && editing.type === 'code') ? '<html>...코드 전체 붙여넣기...</html>' : 'https://...'}" required>${isEdit ? esc(editing.value) : ''}</textarea>
+    </label>
+    <div class="form-actions">
+      <button type="button" class="btn btn-primary" data-action="save-card-submit">${isEdit ? '수정 저장' : '카드 저장'}</button>
+      <button type="button" class="btn btn-ghost" data-action="close-card-form">취소</button>
+    </div>
+  </div>`;
+}
+
+/* ---- 요일별 미션 설정 탭 ---- */
+function renderScheduleTab() {
+  return `
+  <section>
+    <div class="section-head">
+      <h2>요일별 미션 설정</h2>
+      <span class="hint">요일마다 최대 3개까지 미션을 등록할 수 있어요.</span>
+    </div>
+    <div class="schedule-grid">
+      ${DAYS.map(d => scheduleDayCol(d)).join('')}
+    </div>
+  </section>`;
+}
+
+function scheduleDayCol(d) {
+  const missions = S.schedule[d.key] || [];
+  return `
+  <div class="day-col">
+    <div class="day-col-head">${d.label}</div>
+    ${missions.map((m, i) => {
+      const type = m.type === 'url' ? 'url' : 'code';
+      return `
+      <div class="mission-slot" data-day="${d.key}" data-idx="${i}">
+        <input type="text" class="m-title" value="${esc(m.title)}" placeholder="미션 제목" />
+        <div class="seg seg-mini">
+          <button type="button" class="seg-btn ${type === 'url' ? 'active' : ''}" data-action="mission-type" data-day="${d.key}" data-idx="${i}" data-seg="url">링크</button>
+          <button type="button" class="seg-btn ${type === 'code' ? 'active' : ''}" data-action="mission-type" data-day="${d.key}" data-idx="${i}" data-seg="code">코드</button>
+        </div>
+        <textarea class="m-value" rows="${type === 'code' ? 4 : 1}" placeholder="${type === 'code' ? '<html>...코드 붙여넣기...</html>' : 'https://...'}">${esc(m.value ?? m.url ?? '')}</textarea>
+        <button type="button" class="slot-remove" data-action="remove-mission" data-day="${d.key}" data-idx="${i}">삭제</button>
+      </div>`;
+    }).join('')}
+    ${missions.length < 3 ? `<button type="button" class="btn btn-small btn-ghost add-mission-btn" data-action="add-mission" data-day="${d.key}">+ 미션 추가</button>` : ''}
+    <button type="button" class="btn btn-small btn-primary save-day-btn" data-action="save-day" data-day="${d.key}">이 요일 저장</button>
+  </div>`;
+}
+
+/* ---- 학생 명단 탭 ---- */
+function renderStudentsTab() {
+  const byClass = {};
+  S.students.forEach(st => {
+    const key = st.className || '미배정';
+    (byClass[key] = byClass[key] || []).push(st);
+  });
+  const classKeys = Object.keys(byClass).sort();
+  return `
+  <section>
+    <div class="section-head">
+      <h2>학생 명단</h2>
+      <span class="hint">총 ${S.students.length}명 · 여기에 등록해두면 제출물 확인함에서 미제출 학생을 바로 알 수 있어요.</span>
+    </div>
+    <div id="student-form" class="panel-form" style="max-width:420px">
+      <h3>학생 추가</h3>
+      <label>이름 <input type="text" id="student-name-input" placeholder="이름" required /></label>
+      <label>반 <input type="text" id="student-class-input" placeholder="예) 3반 (선택)" /></label>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" data-action="add-student-submit">추가</button>
+      </div>
+    </div>
+    ${S.students.length === 0 ? `<div class="empty">아직 등록된 학생이 없어요. 위에서 추가해 보세요.</div>` : ''}
+    ${classKeys.map(k => `
+      <div class="panel-form" style="margin-bottom:14px">
+        <h3>${esc(k)} (${byClass[k].length}명)</h3>
+        <div class="cat-row">
+          ${byClass[k].map(st => `
+            <span class="chip" style="cursor:default">
+              ${esc(st.name)}
+              <button type="button" class="slot-remove" style="margin-left:6px" data-action="delete-student" data-id="${st.id}">삭제</button>
+            </span>`).join('')}
+        </div>
+      </div>`).join('')}
+  </section>`;
+}
+
+/* ---- 제출물 확인함 탭 ---- */
+function studentKey(name, className) {
+  return `${(name || '').trim()}|${(className || '').trim()}`;
+}
+
+function renderSubmissionsTab() {
+  const items = S.submissionIndex.slice().reverse();
+  const filterDay = S.submissionDayFilter;
+
+  // 선택한 요일에 제출한 학생 key 집합
+  const submittedKeysForDay = new Set(
+    S.submissionIndex.filter(s => s.day === filterDay).map(s => studentKey(s.name, s.className))
+  );
+  const missingStudents = S.students.filter(st => !submittedKeysForDay.has(studentKey(st.name, st.className)));
+
+  // 요일별 통계
+  const statsRows = DAYS.map(d => {
+    const keysForDay = new Set(S.submissionIndex.filter(s => s.day === d.key).map(s => studentKey(s.name, s.className)));
+    const submittedCount = S.students.filter(st => keysForDay.has(studentKey(st.name, st.className))).length;
+    const total = S.students.length;
+    return { label: d.label, key: d.key, submittedCount, total, missing: total - submittedCount };
+  });
+
+  return `
+  <section>
+    <div class="section-head">
+      <h2>제출물 확인함</h2>
+      <span class="hint">총 ${items.length}건 누적</span>
+    </div>
+
+    <div class="panel-form">
+      <h3>요일별 제출 현황 통계</h3>
+      <div class="cat-row" style="gap:14px">
+        ${statsRows.map(r => `
+          <span class="chip" style="cursor:default;background:var(--paper)">
+            ${esc(r.label)} — ${r.submittedCount}/${r.total}명 제출${r.total ? ` (미제출 ${r.missing}명)` : ''}
+          </span>`).join('')}
+      </div>
+      ${S.students.length === 0 ? `<span class="hint">학생 명단 탭에서 학생을 등록하면 인원 대비 제출률을 볼 수 있어요.</span>` : ''}
+    </div>
+
+    <div class="panel-form">
+      <h3>미제출 학생 확인</h3>
+      <label style="max-width:220px">확인할 요일
+        <select id="sub-day-filter-select">
+          ${DAYS.map(d => `<option value="${d.key}" ${d.key === filterDay ? 'selected' : ''}>${d.label}</option>`).join('')}
+        </select>
+      </label>
+      ${S.students.length === 0
+        ? `<span class="hint">학생 명단이 없어서 미제출자를 확인할 수 없어요. 학생 명단 탭에서 먼저 등록해주세요.</span>`
+        : (missingStudents.length === 0
+          ? `<span class="hint">${dayLabel(filterDay)}에 등록된 학생 모두 제출했어요 🎉</span>`
+          : `<div class="cat-row">
+              ${missingStudents.map(st => `<span class="chip chip-danger" style="cursor:default">${esc(st.name)} ${st.className ? `(${esc(st.className)})` : ''}</span>`).join('')}
+            </div>`)
+      }
+    </div>
+
+    <div class="sub-list">
+      ${items.length === 0 ? `<div class="empty">아직 제출된 결과물이 없어요.</div>` : ''}
+      ${items.map(s => `
+        <div class="sub-row" data-id="${s.id}">
+          <div class="sub-meta">
+            <strong>${esc(s.name)}</strong> <span class="sub-class">${esc(s.className || '')}</span>
+            <span class="sub-day">${dayLabel(s.day)}</span>
+            <span class="sub-mission">${esc(s.missionTitle)}</span>
+            <span class="sub-time">${fmtTime(s.submittedAt)}</span>
+          </div>
+          <div class="sub-actions">
+            <button class="btn btn-small" data-action="view-submission" data-id="${s.id}">이미지 보기</button>
+            <button class="btn btn-small chip-danger" data-action="delete-submission" data-id="${s.id}">삭제</button>
+          </div>
+          <div class="sub-image-slot" id="sub-img-${s.id}"></div>
+        </div>`).join('')}
+    </div>
+  </section>`;
+}
+
+/* ---- 설정 탭 ---- */
+function renderSettingsTab() {
+  return `
+  <section>
+    <div class="section-head"><h2>설정</h2></div>
+    <div id="pw-change-form" class="panel-form" style="max-width:360px">
+      <h3>관리자 비밀번호 변경</h3>
+      <label>새 비밀번호
+        <input type="text" id="new-pw-input" placeholder="새 비밀번호" required />
+      </label>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" data-action="change-password-submit">비밀번호 변경</button>
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ===================== 아이 모드 셸 ===================== */
+function renderKidShell() {
+  const missions = S.schedule[S.kidDay] || [];
+  return `
+  <div class="shell kid-shell">
+    <header class="topbar kid-topbar">
+      <div class="brand" data-action="go-gate">★ 오늘의 미션</div>
+      <select id="kid-day-select" class="day-select">
+        ${DAYS.map(d => `<option value="${d.key}" ${d.key === S.kidDay ? 'selected' : ''}>${d.label}${d.key === todayKey() ? ' (오늘)' : ''}</option>`).join('')}
+      </select>
+    </header>
+    <main class="content kid-content">
+      <h2 class="kid-day-title">${dayLabel(S.kidDay)} 미션</h2>
+      ${missions.length === 0 ? `<div class="empty">이 요일에는 등록된 미션이 없어요. 선생님께 확인해보세요!</div>` : ''}
+      <div class="mission-cards">
+        ${missions.map((m, i) => `
+          <div class="mission-card">
+            <span class="mission-num">MISSION ${i + 1}</span>
+            <h3>${esc(m.title)}</h3>
+            <button type="button" class="btn btn-kid" data-action="view-mission" data-day="${S.kidDay}" data-idx="${i}">미션하러 가기 →</button>
+          </div>`).join('')}
+      </div>
+      ${missions.length === 0 ? `
+      <div class="mission-cards">
+        <div class="mission-card">
+          <span class="mission-num">FREE</span>
+          <h3>자유 제출</h3>
+          <button type="button" class="btn btn-kid" data-action="view-mission" data-day="${S.kidDay}" data-idx="-1">수료증 제출하러 가기 →</button>
+        </div>
+      </div>` : ''}
+    </main>
+  </div>`;
+}
+
+function renderMissionOverlay() {
+  const { day, idx } = S.missionView;
+  const m = idx === -1 ? { title: '자유 제출', type: null, value: null } : (S.schedule[day] || [])[idx];
+  if (!m) { S.missionView = null; return renderKidShell(); }
+  const frame = idx === -1 ? '' : (m.type === 'code'
+    ? `<iframe class="mission-frame" srcdoc="${esc(m.value || '')}" style="width:100%;height:45vh;border:0;background:#fff;border-radius:12px;"></iframe>`
+    : `<iframe class="mission-frame" src="${esc(m.value || '')}" style="width:100%;height:45vh;border:0;background:#fff;border-radius:12px;"></iframe>`);
+  return `
+  <div class="shell kid-shell mission-view-shell">
+    <header class="topbar kid-topbar">
+      <button type="button" class="btn btn-ghost" data-action="close-mission-view">← 미션 목록으로</button>
+      <h2 class="mission-view-title" style="margin:0;font-size:16px;">${esc(m.title)}</h2>
+    </header>
+    <main class="content" style="padding:12px;box-sizing:border-box;overflow-y:auto;">
+      ${frame}
+      ${m.type === 'url' ? `<p class="hint" style="margin-top:8px;">화면이 안 보이면 <a href="${esc(m.value || '#')}" target="_blank" rel="noopener noreferrer">여기를 눌러 새 탭에서 열어보세요</a>.</p>` : ''}
+
+      <div class="submit-panel" style="margin-top:16px;">
+        <h3>수료증 제출하기</h3>
+        <p class="submit-hint">미션 사이트에서 받은 수료증 이미지를 붙여넣거나 사진첩에서 선택해 주세요.</p>
+        <div id="submit-form">
+          <label>이름 <input type="text" id="kid-name-input" required placeholder="이름" value="${esc(S.kidName)}" /></label>
+          <label>반 <input type="text" id="kid-class-input" placeholder="예) 3반 (선택)" value="${esc(S.kidClassName)}" /></label>
+          <div class="paste-zone" id="paste-zone" contenteditable="true" tabindex="0">
+            ${S.kidPasted ? `<img src="${S.kidPasted}" class="paste-preview" />` : `<span>여기를 길게 눌러 붙여넣기<br/>또는 아래 버튼 사용</span>`}
+          </div>
+          <div class="form-actions" style="gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-ghost" data-action="clipboard-paste">📋 클립보드에서 붙여넣기</button>
+            <button type="button" class="btn btn-ghost" data-action="pick-file">사진첩에서 선택하기</button>
+          </div>
+          <input type="file" id="kid-file-input" accept="image/*" style="display:none" />
+          <div class="form-actions">
+            <button type="button" class="btn btn-kid btn-submit" data-action="kid-submit-action">제출하기</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>`;
+}
+function renderCardViewOverlay() {
+  const c = S.cards.find(x => x.id === S.cardView);
+  if (!c) { S.cardView = null; return renderAdminShell(); }
+  const frame = c.type === 'code'
+    ? `<iframe class="mission-frame" srcdoc="${esc(c.value || '')}" style="width:100%;height:100%;border:0;background:#fff;border-radius:12px;"></iframe>`
+    : `<iframe class="mission-frame" src="${esc(c.value || '')}" style="width:100%;height:100%;border:0;background:#fff;border-radius:12px;"></iframe>`;
+  return `
+  <div class="shell admin-shell">
+    <header class="topbar">
+      <button type="button" class="btn btn-ghost" data-action="close-card-view">← 목록으로</button>
+      <h2 style="margin:0;font-size:16px;">${esc(c.title)}</h2>
+    </header>
+    <main class="content" style="height:calc(100vh - 70px);padding:12px;box-sizing:border-box;">
+      ${frame}
+      ${c.type === 'url' ? `<p class="hint" style="margin-top:8px;">화면이 안 보이면 <a href="${esc(c.value || '#')}" target="_blank" rel="noopener noreferrer">여기를 눌러 새 탭에서 열어보세요</a>.</p>` : ''}
+    </main>
+  </div>`;
+}
+
+function bindDataActions(root) {
+  root.querySelectorAll('[data-action]').forEach(el => {
+    el.addEventListener('click', onAction);
+  });
+}
+
+function bindEnterKey(inputEl, triggerFn) {
+  if (!inputEl) return;
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); triggerFn(); }
+  });
+}
+
+function afterRender() {
+  bindDataActions(app);
+
+  bindEnterKey(document.getElementById('admin-pw-input'), () => onAdminLogin());
+  bindEnterKey(document.getElementById('new-cat-input'), () => onAddCategory());
+  bindEnterKey(document.getElementById('student-name-input'), () => onAddStudent());
+  bindEnterKey(document.getElementById('student-class-input'), () => onAddStudent());
+  bindEnterKey(document.getElementById('new-pw-input'), () => onChangePassword());
+  bindEnterKey(document.getElementById('kid-name-input'), () => onKidSubmit());
+  bindEnterKey(document.getElementById('kid-class-input'), () => onKidSubmit());
+
+  const kidDaySelect = document.getElementById('kid-day-select');
+  if (kidDaySelect) kidDaySelect.addEventListener('change', (e) => {
+    S.kidDay = e.target.value;
+    S.kidPasted = null;
+    render();
+  });
+
+  const subDayFilterSelect = document.getElementById('sub-day-filter-select');
+  if (subDayFilterSelect) subDayFilterSelect.addEventListener('change', (e) => {
+    S.submissionDayFilter = e.target.value;
+    render();
+  });
+
+  const kidNameInput = document.getElementById('kid-name-input');
+  if (kidNameInput) kidNameInput.addEventListener('input', (e) => { S.kidName = e.target.value; });
+  const kidClassInput = document.getElementById('kid-class-input');
+  if (kidClassInput) kidClassInput.addEventListener('input', (e) => { S.kidClassName = e.target.value; });
+
+  const pasteZone = document.getElementById('paste-zone');
+  if (pasteZone) {
+    pasteZone.addEventListener('paste', onPasteImage);
+    pasteZone.addEventListener('click', () => pasteZone.focus());
+  }
+  const kidFileInput = document.getElementById('kid-file-input');
+  if (kidFileInput) kidFileInput.addEventListener('change', onKidFilePicked);
+}
+
+/* ===================== 액션 핸들러 ===================== */
+function onAction(e) {
+  const btn = e.currentTarget;
+  const action = btn.dataset.action;
+  try {
+    if (action === 'go-admin') { S.mode = 'admin'; render(); }
+    else if (action === 'go-kid') { S.mode = 'kid'; S.kidDay = todayKey(); render(); }
+    else if (action === 'go-gate') { S.mode = 'gate'; S.adminUnlocked = false; render(); }
+    else if (action === 'admin-tab') { S.adminTab = btn.dataset.tab; render(); }
+    else if (action === 'pick-category') { S.activeCategory = btn.dataset.cat; render(); }
+    else if (action === 'open-card-form') { renderCardFormInto(null); }
+    else if (action === 'close-card-form') { document.getElementById('card-form-slot').innerHTML = ''; }
+    else if (action === 'open-card') { doOpenCard(btn.dataset.id); }
+    else if (action === 'copy-card') { doCopyCard(btn.dataset.id); }
+    else if (action === 'edit-card') { const c = S.cards.find(x => x.id === btn.dataset.id); renderCardFormInto(c); }
+    else if (action === 'delete-category-prompt') { doDeleteCategoryPrompt(); }
+    else if (action === 'add-mission') { doAddMission(btn.dataset.day); }
+    else if (action === 'remove-mission') { doRemoveMission(btn.dataset.day, Number(btn.dataset.idx)); }
+    else if (action === 'save-day') { doSaveDay(btn.dataset.day); }
+    else if (action === 'mission-type') { onMissionTypeToggle(btn.dataset.day, Number(btn.dataset.idx), btn.dataset.seg); }
+    else if (action === 'view-submission') { doViewSubmission(btn.dataset.id); }
+    else if (action === 'delete-submission') { doDeleteSubmission(btn.dataset.id); }
+    else if (action === 'delete-student') { doDeleteStudent(btn.dataset.id); }
+    else if (action === 'go-mission') { doGoMission(btn.dataset.day, Number(btn.dataset.idx)); }
+    else if (action === 'pick-file') { document.getElementById('kid-file-input').click(); }
+    else if (action === 'clipboard-paste') { onClipboardPasteButton(); }
+    else if (action === 'retry-storage') { retryStorageCheck(); }
+    else if (action === 'admin-login-submit') { onAdminLogin(); }
+    else if (action === 'add-student-submit') { onAddStudent(); }
+    else if (action === 'add-category-submit') { onAddCategory(); }
+    else if (action === 'change-password-submit') { onChangePassword(); }
+    else if (action === 'save-card-submit') { onSaveCard(); }
+    else if (action === 'kid-submit-action') { onKidSubmit(); }
+    else if (action === 'view-mission') { S.missionView = { day: btn.dataset.day, idx: Number(btn.dataset.idx) }; render(); }
+    else if (action === 'close-mission-view') { S.missionView = null; render(); }
+    else if (action === 'view-card') { S.cardView = btn.dataset.id; render(); }
+    else if (action === 'close-card-view') { S.cardView = null; render(); }
+    else { console.warn('처리되지 않은 action:', action); }
+  } catch (err) {
+    console.error('onAction 오류 (' + action + ')', err);
+    showToast('❌ 오류(' + action + '): ' + (err && err.message ? err.message : String(err)));
+  }
+}
+
+async function retryStorageCheck() {
+  showToast('저장소 상태를 확인하는 중...');
+  const ok = await diagnoseStorage();
+  S.storageOk = ok;
+  if (ok) {
+    await loadAll();
+    showToast('저장이 정상적으로 연결됐어요 ✅');
+  } else {
+    showToast('여전히 저장이 안 돼요. 클로드 대화창 안에서 열고 있는지 확인해주세요');
+  }
+}
+
+async function onAdminLogin() {
+  const submitBtn = document.querySelector('[data-action="admin-login-submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+  try {
+    const pw = document.getElementById('admin-pw-input').value;
+    // 저장소 응답이 없어도 5초 뒤엔 포기하고 기본값으로 처리 (무한 대기 방지)
+    const saved = await Promise.race([
+      getSharedRaw('admin-password'),
+      new Promise(resolve => setTimeout(() => resolve(null), 5000)),
+    ]);
+    const real = saved === null ? '0000' : saved;
+    if (pw === real) {
+      S.adminUnlocked = true;
+      S.adminTab = 'portfolio';
+      render();
+      return; // render()가 화면을 새로 그리므로 버튼 재활성화 불필요
+    } else {
+      showToast('비밀번호가 올바르지 않아요');
+    }
+  } catch (err) {
+    console.error('로그인 오류', err);
+    showToast('❌ 로그인 중 오류: ' + (err && err.message ? err.message : String(err)));
+  }
+  if (submitBtn) submitBtn.disabled = false;
+}
+
+async function onChangePassword() {
+  const input = document.getElementById('new-pw-input');
+  const pw = input.value.trim();
+  if (!pw) return;
+  const ok = await setSharedRaw('admin-password', pw);
+  if (ok) {
+    showToast('비밀번호가 변경되었어요');
+    input.value = '';
+  } else {
+    showToast('❌ 저장에 실패했어요. 위 안내를 확인하고 다시 시도해주세요');
+  }
+}
+
+async function onAddCategory() {
+  const input = document.getElementById('new-cat-input');
+  const val = input.value.trim();
+  if (!val) return;
+  if (S.categories.includes(val)) { showToast('이미 있는 카테고리예요'); return; }
+  const next = [...S.categories, val];
+  const ok = await setShared('categories', next);
+  if (!ok) { showToast('❌ 저장에 실패했어요. 위 안내를 확인해주세요'); return; }
+  S.categories = next;
+  input.value = '';
+  render();
+}
+
+function doDeleteCategoryPrompt() {
+  if (S.categories.length === 0) return;
+  const name = prompt('삭제할 카테고리 이름을 입력하세요:\n' + S.categories.join(', '));
+  if (!name) return;
+  if (!S.categories.includes(name)) { showToast('그런 카테고리는 없어요'); return; }
+  doDeleteCategory(name);
+}
+async function doDeleteCategory(name) {
+  const nextCats = S.categories.filter(c => c !== name);
+  const nextCards = S.cards.map(c => c.category === name ? { ...c, category: '__uncategorized__' } : c);
+  const [ok1, ok2] = await Promise.all([setShared('categories', nextCats), setShared('cards', nextCards)]);
+  if (!ok1 || !ok2) { showToast('❌ 저장에 실패했어요. 위 안내를 확인해주세요'); return; }
+  S.categories = nextCats;
+  S.cards = nextCards;
+  if (S.activeCategory === name) S.activeCategory = '__all__';
+  showToast('카테고리를 삭제했어요. 카드는 미분류로 이동했어요');
+  render();
+}
+
+async function onAddStudent() {
+  const nameInput = document.getElementById('student-name-input');
+  const classInput = document.getElementById('student-class-input');
+  const name = nameInput.value.trim();
+  const className = classInput.value.trim();
+  if (!name) return;
+  const dup = S.students.some(st => studentKey(st.name, st.className) === studentKey(name, className));
+  if (dup) { showToast('이미 등록된 학생이에요'); return; }
+  const next = [...S.students, { id: uid(), name, className }];
+  const ok = await setShared('students', next);
+  if (!ok) { showToast('❌ 저장에 실패했어요. 위 안내를 확인해주세요'); return; }
+  S.students = next;
+  nameInput.value = '';
+  classInput.value = '';
+  showToast('학생을 추가했어요');
+  render();
+}
+
+async function doDeleteStudent(id) {
+  if (!confirm('이 학생을 명단에서 삭제할까요?')) return;
+  const next = S.students.filter(st => st.id !== id);
+  const ok = await setShared('students', next);
+  if (!ok) { showToast('❌ 삭제에 실패했어요. 다시 시도해주세요'); return; }
+  S.students = next;
+  showToast('학생을 삭제했어요');
+  render();
+}
+
+function renderCardFormInto(editing) {
+  const slot = document.getElementById('card-form-slot');
+  slot.innerHTML = cardFormHtml(editing);
+  const form = document.getElementById('card-form');
+  form.dataset.editId = editing ? editing.id : '';
+  bindDataActions(slot); // 동적으로 삽입된 저장/취소 버튼에도 클릭 이벤트 연결
+  bindCardForm(form);
+  form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function bindCardForm(form) {
+  form.querySelectorAll('.seg-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      form.querySelectorAll('.seg-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById('card-type-input').value = b.dataset.seg;
+      const label = document.getElementById('card-value-label');
+      const textarea = document.getElementById('card-value-input');
+      if (b.dataset.seg === 'code') {
+        label.firstChild.textContent = 'HTML 코드';
+        textarea.rows = 8;
+        textarea.placeholder = '<html>...코드 전체 붙여넣기...</html>';
+      } else {
+        label.firstChild.textContent = '웹사이트 주소';
+        textarea.rows = 2;
+        textarea.placeholder = 'https://...';
+      }
+    });
+  });
+}
+
+async function onSaveCard() {
+  const form = document.getElementById('card-form');
+  const editId = form ? form.dataset.editId : '';
+  const category = document.getElementById('card-cat-select').value;
+  const title = document.getElementById('card-title-input').value.trim();
+  const type = document.getElementById('card-type-input').value;
+  const value = document.getElementById('card-value-input').value.trim();
+  if (!title || !value) return;
+
+  let nextCards;
+  if (editId) {
+    nextCards = S.cards.map(c => c.id === editId ? { ...c, category, title, type, value, updatedAt: new Date().toISOString() } : c);
+  } else {
+    nextCards = [...S.cards, { id: uid(), category, title, type, value, createdAt: new Date().toISOString() }];
+  }
+  const ok = await setShared('cards', nextCards);
+  if (!ok) {
+    showToast('❌ 저장에 실패했어요. 입력한 내용은 그대로 있으니 위 안내를 확인하고 다시 눌러주세요');
+    return;
+  }
+  S.cards = nextCards;
+  document.getElementById('card-form-slot').innerHTML = '';
+  showToast(editId ? '수정했어요' : '저장했어요');
+  render();
+}
+
+function doOpenCard(id) {
+  const c = S.cards.find(x => x.id === id);
+  if (!c) return;
+  if (c.type === 'url') {
+    window.open(c.value, '_blank', 'noopener');
+  } else {
+    const blob = new Blob([c.value], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener');
+  }
+}
+
+function doCopyCard(id) {
+  const c = S.cards.find(x => x.id === id);
+  if (!c) return;
+  navigator.clipboard.writeText(c.value).then(() => showToast('복사했어요')).catch(() => showToast('복사에 실패했어요'));
+}
+
+function doAddMission(day) {
+  const list = S.schedule[day] || [];
+  if (list.length >= 3) return;
+  list.push({ id: uid(), title: '', type: 'url', value: '' });
+  S.schedule[day] = list;
+  render();
+}
+function doRemoveMission(day, idx) {
+  S.schedule[day].splice(idx, 1);
+  render();
+}
+function onMissionTypeToggle(day, idx, seg) {
+  // 화면에 이미 입력된 값을 잃지 않도록 현재 폼 상태를 먼저 수집한 뒤 타입만 바꿔서 다시 그림
+  const slots = document.querySelectorAll(`.mission-slot[data-day="${day}"]`);
+  const list = [];
+  slots.forEach((slot, i) => {
+    const title = slot.querySelector('.m-title').value;
+    const value = slot.querySelector('.m-value').value;
+    const type = i === idx ? seg : (slot.querySelector('.seg-btn.active') ? slot.querySelector('.seg-btn.active').dataset.seg : 'url');
+    list.push({ id: (S.schedule[day][i] || {}).id || uid(), title, type, value });
+  });
+  S.schedule[day] = list;
+  render();
+}
+async function doSaveDay(day) {
+  const slots = document.querySelectorAll(`.mission-slot[data-day="${day}"]`);
+  const list = [];
+  slots.forEach((slot, i) => {
+    const title = slot.querySelector('.m-title').value.trim();
+    const value = slot.querySelector('.m-value').value.trim();
+    const activeSeg = slot.querySelector('.seg-btn.active');
+    const type = activeSeg ? activeSeg.dataset.seg : 'url';
+    if (title || value) list.push({ id: (S.schedule[day][i] || {}).id || uid(), title, type, value });
+  });
+  const nextSchedule = { ...S.schedule, [day]: list };
+  const ok = await setShared('missions-schedule', nextSchedule);
+  if (!ok) {
+    showToast('❌ 저장에 실패했어요. 입력한 내용은 그대로 있으니 위 안내를 확인하고 다시 눌러주세요');
+    return;
+  }
+  S.schedule = nextSchedule;
+  showToast(`${dayLabel(day)} 미션을 저장했어요`);
+}
+function doGoMission(day, idx) {
+  const m = (S.schedule[day] || [])[idx];
+  if (!m) return;
+  if (m.type === 'code') {
+    const blob = new Blob([m.value], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener');
+  } else {
+    window.open(m.value, '_blank', 'noopener');
+  }
+}
+
+async function doViewSubmission(id) {
+  const slot = document.getElementById(`sub-img-${id}`);
+  if (!slot) return;
+  if (slot.dataset.loaded === '1') {
+    slot.classList.toggle('open');
+    return;
+  }
+  slot.innerHTML = '<span class="loading-text">불러오는 중...</span>';
+  const imgData = await getSharedRaw(`submission-img:${id}`);
+  if (imgData) {
+    slot.innerHTML = `<img src="${imgData}" class="sub-image" /><a class="btn btn-small" download="certificate-${id}.jpg" href="${imgData}">다운로드</a>`;
+    slot.dataset.loaded = '1';
+    slot.classList.add('open');
+  } else {
+    slot.innerHTML = '<span class="loading-text">이미지를 찾을 수 없어요</span>';
+  }
+}
+
+async function doDeleteSubmission(id) {
+  if (!confirm('이 제출물을 삭제할까요? 삭제하면 학생이 다시 제출할 수 있어요.')) return;
+  const nextIndex = S.submissionIndex.filter(s => s.id !== id);
+  const ok = await setShared('submission-index', nextIndex);
+  if (!ok) { showToast('❌ 삭제에 실패했어요. 다시 시도해주세요'); return; }
+  S.submissionIndex = nextIndex;
+  try { await deleteSharedRaw(`submission-img:${id}`); } catch (e) { /* 이미지 삭제 실패는 무시 */ }
+  showToast('제출물을 삭제했어요');
+  render();
+}
+
+/* ---- 아이 이미지 붙여넣기/파일선택 ---- */
+function updatePastePreview() {
+  const zone = document.getElementById('paste-zone');
+  if (!zone) { render(); return; } // 혹시 못 찾으면 안전하게 전체 다시 그림
+  zone.innerHTML = S.kidPasted
+    ? `<img src="${S.kidPasted}" class="paste-preview" />`
+    : `<span>여기를 누르고 Ctrl+V(붙여넣기)<br/>또는 아래 버튼으로 사진 선택</span>`;
+}
+
+async function onPasteImage(e) {
+  e.preventDefault(); // contenteditable 영역이라 기본 붙여넣기(텍스트/이미지 삽입)를 항상 막아야 우리 코드로만 처리됨
+  const items = (e.clipboardData || window.clipboardData).items;
+  for (const item of items) {
+    if (item.type.indexOf('image') !== -1) {
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        S.kidPasted = await resizeImage(ev.target.result);
+        updatePastePreview();
+      };
+      reader.readAsDataURL(blob);
+      return;
+    }
+  }
+  showToast('이미지를 찾지 못했어요. 사진첩에서 선택해 주세요');
+}
+
+// 태블릿에서 길게 눌러 붙여넣기가 잘 안 될 때를 위한 버튼: Clipboard API로 클립보드 이미지를 직접 읽어온다.
+async function onClipboardPasteButton() {
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.read) {
+      showToast('이 브라우저에서는 버튼으로 붙여넣기가 안 돼요. 붙여넣기 칸을 길게 눌러서 시도해주세요');
+      return;
+    }
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const imgType = item.types.find(t => t.startsWith('image/'));
+      if (imgType) {
+        const blob = await item.getType(imgType);
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          S.kidPasted = await resizeImage(ev.target.result);
+          updatePastePreview();
+        };
+        reader.readAsDataURL(blob);
+        return;
+      }
+    }
+    showToast('클립보드에 이미지가 없어요. 먼저 사진을 복사해주세요');
+  } catch (err) {
+    console.error('클립보드 읽기 오류', err);
+    showToast('클립보드 접근이 안 됐어요. 붙여넣기 칸을 길게 눌러 "붙여넣기"를 선택해보세요');
+  }
+}
+
+function onKidFilePicked(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (ev) => {
+    S.kidPasted = await resizeImage(ev.target.result);
+    updatePastePreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+async function onKidSubmit() {
+  const name = document.getElementById('kid-name-input').value.trim();
+  const className = document.getElementById('kid-class-input').value.trim();
+  const view = S.missionView;
+  if (!view) { showToast('미션 화면에서 다시 시도해 주세요'); return; }
+  const day = view.day;
+  const missionTitle = view.idx === -1 ? '자유 제출' : ((S.schedule[day] || [])[view.idx] || {}).title || '자유 제출';
+  if (!name) { showToast('이름을 입력해 주세요'); return; }
+  if (!S.kidPasted) { showToast('수료증 이미지를 붙여넣거나 선택해 주세요'); return; }
+
+  S.kidName = name;
+  S.kidClassName = className;
+
+  // 같은 학생이 같은 요일·같은 미션에 이미 제출한 적이 있으면, 새로 만들지 않고 덮어써서 재업로드로 처리
+  const existing = S.submissionIndex.find(s =>
+    studentKey(s.name, s.className) === studentKey(name, className) && s.day === day && s.missionTitle === missionTitle
+  );
+  const id = existing ? existing.id : uid();
+  const meta = { id, name, className, day, missionTitle, submittedAt: new Date().toISOString() };
+
+  const imgOk = await setSharedRaw(`submission-img:${id}`, S.kidPasted);
+  if (!imgOk) {
+    showToast('❌ 제출에 실패했어요. 붙여넣은 사진은 그대로 있으니 다시 눌러주세요');
+    return;
+  }
+  const nextIndex = existing
+    ? S.submissionIndex.map(s => s.id === id ? meta : s)
+    : [...S.submissionIndex, meta];
+  const idxOk = await setShared('submission-index', nextIndex);
+  if (!idxOk) {
+    showToast('❌ 제출에 실패했어요. 붙여넣은 사진은 그대로 있으니 다시 눌러주세요');
+    return;
+  }
+  S.submissionIndex = nextIndex;
+  S.kidPasted = null;
+  S.missionView = null;
+  render();
+  showToast(existing ? '다시 제출했어요! (이전 제출은 새 사진으로 교체됐어요) 🎉' : '제출 완료! 잘했어요 🎉');
+}
+
+/* ===================== 전역 오류 안전망 (조용히 실패하지 않도록) ===================== */
+window.addEventListener('error', (e) => {
+  console.error('전역 오류', e.error || e.message);
+  try { showToast('❌ 오류 발생: ' + (e.message || '알 수 없는 오류')); } catch (_) {}
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('처리되지 않은 Promise 오류', e.reason);
+  try { showToast('❌ 오류 발생: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason))); } catch (_) {}
+});
+
+/* ===================== 시작 ===================== */
+(async function init() {
+  S.storageOk = await diagnoseStorage();
+  await loadAll();
+  render();
+})();
+
+</script>
+</body>
+</html>
